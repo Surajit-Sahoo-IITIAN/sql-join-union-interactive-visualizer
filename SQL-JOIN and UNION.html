@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL JOIN & UNION Interactive Visualizer</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#172235}
+.app{max-width:1450px;margin:auto;padding:18px}
+.card{background:#fff;border:1px solid #d7e0eb;border-radius:14px;box-shadow:0 4px 16px rgba(25,55,90,.08)}
+.hero{background:linear-gradient(135deg,#0e4fae,#287be8);color:#fff;padding:22px 25px;border-radius:18px;display:flex;justify-content:space-between;gap:20px;align-items:center}
+.hero h1{margin:0 0 6px;font-size:29px}.hero p{margin:0;opacity:.92}
+.tip{border:1px solid #ffffff66;background:#ffffff18;border-radius:12px;padding:12px 15px;min-width:270px}
+.top{display:grid;grid-template-columns:1fr 1fr .9fr;gap:14px;margin-top:14px}
+.tablecard{padding:13px}.title{font-weight:800;font-size:17px;margin-bottom:9px}
+.keyinfo{display:flex;gap:6px;flex-wrap:wrap;margin:-3px 0 9px}
+.keybadge{font-size:10px;font-weight:800;padding:4px 7px;border-radius:999px;border:1px solid}
+.pkbadge{background:#fff3cd;color:#785900;border-color:#ead27b}
+.fkbadge{background:#e8f4ff;color:#145eaa;border-color:#a9d3f7}
+.relbadge{background:#eef9f1;color:#237044;border-color:#b9dfc5}
+
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #d8e0e9;padding:7px 8px;text-align:left}th{background:#edf2f7}
+.src{cursor:pointer}.src:hover{filter:brightness(.97)}
+.match{background:#dff0ff}.leftonly{background:#fff1ad}.rightonly{background:#ffdce4}
+.selected{outline:3px solid #1769e0;outline-offset:-3px}
+.info{padding:14px}.info h3{margin:0 0 8px;color:#1557aa}.steps{margin:0;padding-left:21px;line-height:1.7;font-size:13px}
+.legend{margin-top:12px;border:1px solid #d8e0e9;border-radius:9px;padding:9px;font-size:12px}
+.dot{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:-2px;margin-right:4px;border:1px solid #aab5c2}.blue{background:#84c5ff}.yellow{background:#ffe269}.red{background:#ffacba}.gray{background:#e7eaee}
+.controls{margin-top:14px;padding:12px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.controls b{color:#1557aa}
+.sep{height:32px;border-left:1px dashed #b9c4d0;margin:0 7px}
+.op{border:1px solid #c7d2df;background:#fff;border-radius:9px;padding:9px 13px;font-weight:750;cursor:pointer}.op:hover{box-shadow:0 3px 8px rgba(0,0,0,.08)}
+.op.active{background:#1769e0;color:#fff;border-color:#1769e0}
+.main{margin-top:14px;padding:15px}.head{display:flex;justify-content:space-between;align-items:end}.head h2{margin:0;color:#1353a2}.sub{font-size:13px;color:#64748b;margin-top:3px}.badge{background:#e4f1ff;color:#155eaf;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}
+.workspace{display:grid;grid-template-columns:370px 1fr 390px;gap:12px;margin-top:13px}
+.box{border:1px solid #d8e0e9;border-radius:11px;padding:12px;min-width:0}.box h3{margin:0 0 9px;color:#1557aa;font-size:16px}
+.venn{background:#fbfdff;border:1px solid #e2e8f0;border-radius:10px;padding:5px}
+.venn svg{width:100%;height:auto;display:block}
+.vcircle{cursor:pointer;transition:.2s}.vregion{cursor:pointer}.vregion:hover{filter:brightness(.96)}
+.vlabel{font-weight:800;font-size:13px;pointer-events:none}.regionlabel{font-weight:800;font-size:11px;pointer-events:none}
+.vennnote{text-align:center;color:#596b82;font-size:12px;padding:7px 5px 4px;line-height:1.45}
+.result{max-height:315px;overflow:auto}.null{background:#eef0f3;color:#858c95;font-style:italic}
+.focus{animation:pulse .55s}@keyframes pulse{50%{background:#cce6ff}}
+.status{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.pill{padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}.pblue{background:#e1f1ff;color:#155eaf}.pyellow{background:#fff2b6;color:#755b00}.pred{background:#ffe1e7;color:#9c3049}
+.sqlbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.copy{border:1px solid #c7d2df;background:#fff;border-radius:7px;padding:5px 9px;cursor:pointer}
+.sql{background:#111a2b;color:#e8edf6;border-radius:9px;padding:13px;white-space:pre-wrap;font:12px/1.65 Consolas,monospace;min-height:175px;overflow:auto}
+.explain{margin-top:9px;background:#eef9f1;border:1px solid #cce8d4;border-radius:8px;padding:10px;font-size:12px;line-height:1.55}
+.cards{display:grid;grid-template-columns:repeat(8,1fr);gap:7px;margin-top:12px}.mini{border:1px solid #d8e0e9;border-radius:9px;padding:9px;text-align:center;background:#fff;cursor:pointer}.mini:hover{box-shadow:0 3px 9px rgba(25,55,90,.12)}.mini b{font-size:12px}.mini p{font-size:10px;color:#68788c;margin:6px 0 0}
+.extra{margin-top:14px;padding:15px}.extra h2{margin:0;color:#1353a2;font-size:21px}.extraSub{font-size:13px;color:#64748b;margin-top:3px}.queryNav{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.qbtn{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer}.qbtn.active{background:#155eb4;color:#fff}
+.querygrid{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px}.flowbox{padding:13px}.flowbox h3{margin:0 0 9px;color:#1557aa}.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.flow span{background:#eef4fb;border:1px solid #d5deea;border-radius:7px;padding:8px;font-size:12px;font-weight:750}.flow .arrow{background:none;border:0;font-size:18px;padding:0}.code{background:#111a2b;color:#e8edf6;border-radius:8px;padding:12px;font:12px/1.7 Consolas,monospace;white-space:pre-wrap;min-height:145px}.qresult{max-height:245px;overflow:auto}.qnote{margin-top:10px;background:#f8fafc;border-left:4px solid #1769e0;padding:9px;font-size:12px;line-height:1.5}
+
+.builderbar{margin-top:12px;border:1px solid #d8e0e9;border-radius:10px;padding:11px;background:#fbfdff}
+.builderlabel{font-weight:800;color:#1557aa;margin-right:7px;font-size:13px}
+.builderrow{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:5px 0}
+.joinpick,.stepbtn{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:8px 11px;font-weight:700;font-size:12px;cursor:pointer}
+.joinpick.active,.stepbtn.active{background:#1769e0;color:#fff;border-color:#1769e0}
+.joinpick.setop{background:#fff5f7}.joinpick.setop.active{background:#d95c78;border-color:#d95c78;color:#fff}
+.builderhint{font-size:11px;color:#64748b;margin-top:7px}
+@media(max-width:1050px){.top,.workspace,.querygrid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.hero{flex-direction:column;align-items:flex-start}.cards{grid-template-columns:repeat(2,1fr)}.sep{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section class="hero">
+  <div>
+    <h1>🗄️ SQL JOIN & UNION Interactive Visualizer</h1>
+    <p>First understand which rows are selected. Then see the SQL result.</p>
+  </div>
+  <div class="tip"><b>💡 Try this</b><br>Click the <b>STUDENT ONLY</b>, <b>MATCH</b>, or <b>IAMARKS ONLY</b> region.</div>
+</section>
+
+<section class="top">
+  <div class="card tablecard">
+    <div class="title">Table 1: STUDENT (S)</div>
+    <div class="keyinfo">
+      <span class="keybadge pkbadge">🔑 PK: USN</span>
+    </div>
+    <table id="student"></table>
+  </div>
+  <div class="card tablecard">
+    <div class="title">Table 2: IAMARKS (IA)</div>
+    <div class="keyinfo">
+      <span class="keybadge pkbadge">🔑 PK: (USN, Subcode)</span>
+      <span class="keybadge fkbadge">🔗 FK: USN → STUDENT.USN</span>
+    </div>
+    <table id="marks"></table>
+  </div>
+  <div class="card info">
+    <h3>🔗 Key Relationship</h3>
+    <div style="background:#eef6ff;border:1px solid #c9def5;border-radius:9px;padding:9px;font-size:12px;line-height:1.5;margin-bottom:10px">
+      <b>STUDENT.USN</b> (PK)
+      <span style="font-weight:800;color:#1557aa"> ← </span>
+      <b>IAMARKS.USN</b> (FK)
+    </div>
+    <h3>How to understand JOIN</h3>
+    <ol class="steps">
+      <li><b>STUDENT.USN</b> is the Primary Key.</li>
+      <li><b>IAMARKS.USN</b> is a Foreign Key referencing STUDENT.USN.</li>
+      <li>Compare <b>USN</b> in both tables.</li>
+      <li>Same USN = <b>matching row</b>.</li>
+      <li>The two circles represent the two tables.</li>
+      <li>The overlap represents the <b>matching rows</b>.</li>
+      <li>Select a JOIN to see exactly which region is kept.</li>
+    </ol>
+    <div class="legend">
+      <b>Source rows</b><br><br>
+      <span class="dot blue"></span> Matching &nbsp;
+      <span class="dot yellow"></span> STUDENT only<br><br>
+      <span class="dot red"></span> IAMARKS only &nbsp;
+      <span class="dot gray"></span> NULL
+    </div>
+    <div class="keyinfo" style="margin-top:10px">
+      <span class="keybadge relbadge">STUDENT.USN ← IAMARKS.USN</span>
+    </div>
+  </div>
+</section>
+
+<section class="card controls">
+  <b>JOIN</b>
+  <button class="op active" data-op="INNER JOIN">INNER JOIN</button>
+  <button class="op" data-op="LEFT JOIN">LEFT JOIN</button>
+  <button class="op" data-op="RIGHT JOIN">RIGHT JOIN</button>
+  <button class="op" data-op="FULL OUTER JOIN">FULL OUTER JOIN</button>
+  <button class="op" data-op="CROSS JOIN">CROSS JOIN</button>
+  <button class="op" data-op="SELF JOIN">SELF JOIN</button>
+  <div class="sep"></div>
+  <b>SET</b>
+  <button class="op" data-op="UNION">UNION</button>
+  <button class="op" data-op="UNION ALL">UNION ALL</button>
+</section>
+
+<section class="card main">
+  <div class="head">
+    <div><h2 id="opTitle">INNER JOIN</h2><div class="sub" id="subtitle"></div></div>
+    <div class="badge" id="count"></div>
+  </div>
+
+  <div class="workspace">
+    <div class="box">
+      <h3>Venn Diagram — select a region</h3>
+      <div class="venn">
+        <!-- The geometry is intentionally fixed:
+             two overlapping circles = two tables;
+             intersection = matching rows.
+             Highlight layers are controlled by JavaScript. -->
+        <svg id="vennSvg" viewBox="0 0 360 285" role="img" aria-label="Interactive Venn diagram for SQL joins">
+          <defs>
+            <clipPath id="clipLeft"><circle cx="145" cy="120" r="88"/></clipPath>
+            <clipPath id="clipRight"><circle cx="215" cy="120" r="88"/></clipPath>
+          </defs>
+
+          <!-- Base circles -->
+          <circle cx="145" cy="120" r="88" fill="#eaf3ff" stroke="#1970df" stroke-width="3" class="vcircle" id="baseLeft"/>
+          <circle cx="215" cy="120" r="88" fill="#eaf8f0" stroke="#2fa568" stroke-width="3" class="vcircle" id="baseRight"/>
+
+          <!-- Highlight LEFT JOIN: entire left circle -->
+          <circle id="hlLeft" cx="145" cy="120" r="88" fill="#78bdf5" opacity="0" pointer-events="none"/>
+
+          <!-- Highlight RIGHT JOIN: entire right circle -->
+          <circle id="hlRight" cx="215" cy="120" r="88" fill="#70c99b" opacity="0" pointer-events="none"/>
+
+          <!-- Highlight FULL OUTER: both complete circles -->
+          <circle id="hlFullLeft" cx="145" cy="120" r="88" fill="#9bb9f5" opacity="0" pointer-events="none"/>
+          <circle id="hlFullRight" cx="215" cy="120" r="88" fill="#9bb9f5" opacity="0" pointer-events="none"/>
+
+          <!-- Highlight INTERSECTION:
+               right circle clipped to left circle = exact geometric intersection -->
+          <circle id="hlIntersection" cx="215" cy="120" r="88" fill="#1769e0" opacity="0" clip-path="url(#clipLeft)" pointer-events="none"/>
+
+          <!-- Transparent clickable regions -->
+          <circle cx="145" cy="120" r="88" fill="transparent" class="vregion" id="leftClick"/>
+          <circle cx="215" cy="120" r="88" fill="transparent" class="vregion" id="rightClick"/>
+          <circle cx="215" cy="120" r="88" fill="transparent" clip-path="url(#clipLeft)" class="vregion" id="intersectionClick"/>
+
+          <!-- Labels are outside the overlap so they remain readable -->
+          <text x="100" y="116" text-anchor="middle" class="vlabel">STUDENT</text>
+          <text x="100" y="134" text-anchor="middle" class="regionlabel">ONLY</text>
+          <text x="180" y="116" text-anchor="middle" class="regionlabel" fill="#fff">MATCH</text>
+          <text x="260" y="116" text-anchor="middle" class="vlabel">IAMARKS</text>
+          <text x="260" y="134" text-anchor="middle" class="regionlabel">ONLY</text>
+
+          <text x="180" y="238" text-anchor="middle" font-size="11" fill="#64748b" id="vennSvgNote">Only the intersection is selected.</text>
+        </svg>
+      </div>
+      <div class="vennnote" id="vennNote">
+        <b>INNER JOIN:</b> only the MATCH region is kept.
+      </div>
+    </div>
+
+    <div class="box">
+      <h3 id="resultTitle">Result Table — intersection</h3>
+      <div class="result"><table id="result"></table></div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="box">
+      <div class="sqlbar"><h3>SQL Syntax</h3><button class="copy" id="copy">Copy</button></div>
+      <div class="sql" id="sql"></div>
+      <div class="explain" id="explain"></div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="mini" data-op="INNER JOIN"><b>INNER JOIN</b><p>MATCH only</p></div>
+    <div class="mini" data-op="LEFT JOIN"><b>LEFT JOIN</b><p>Entire left circle</p></div>
+    <div class="mini" data-op="RIGHT JOIN"><b>RIGHT JOIN</b><p>Entire right circle</p></div>
+    <div class="mini" data-op="FULL OUTER JOIN"><b>FULL OUTER</b><p>Both circles</p></div>
+    <div class="mini" data-op="CROSS JOIN"><b>CROSS JOIN</b><p>Every combination</p></div>
+    <div class="mini" data-op="SELF JOIN"><b>SELF JOIN</b><p>Same table twice</p></div>
+    <div class="mini" data-op="UNION"><b>UNION</b><p>Rows, duplicates removed</p></div>
+    <div class="mini" data-op="UNION ALL"><b>UNION ALL</b><p>Rows, duplicates kept</p></div>
+  </div>
+</section>
+
+<section class="card extra">
+  <h2>🔬 Build Bigger Queries — Choose JOIN, Then Add SQL Operations</h2>
+  <div class="extraSub">
+    First choose the JOIN operation. Then add <b>WHERE, GROUP BY, Aggregate, HAVING, ORDER BY</b> and <b>LIMIT</b> step-by-step.
+    The result table and SQL query update together.
+  </div>
+
+  <div class="builderbar">
+    <div class="builderrow">
+      <span class="builderlabel">1. Choose JOIN:</span>
+      <button type="button" class="joinpick active" data-build-join="INNER JOIN">INNER JOIN</button>
+      <button type="button" class="joinpick" data-build-join="LEFT JOIN">LEFT JOIN</button>
+      <button type="button" class="joinpick" data-build-join="RIGHT JOIN">RIGHT JOIN</button>
+      <button type="button" class="joinpick" data-build-join="FULL OUTER JOIN">FULL OUTER JOIN</button>
+      <button type="button" class="joinpick" data-build-join="CROSS JOIN">CROSS JOIN</button>
+      <button type="button" class="joinpick" data-build-join="SELF JOIN">SELF JOIN</button>
+    </div>
+
+    <div class="builderrow">
+      <span class="builderlabel">2. Add query operation:</span>
+      <button type="button" class="stepbtn active" data-build-step="BASIC">Basic</button>
+      <button type="button" class="stepbtn" data-build-step="WHERE">+ WHERE</button>
+      <button type="button" class="stepbtn" data-build-step="AVG">+ GROUP BY + AVG</button>
+      <button type="button" class="stepbtn" data-build-step="COUNT">+ GROUP BY + COUNT</button>
+      <button type="button" class="stepbtn" data-build-step="HAVING">+ HAVING</button>
+      <button type="button" class="stepbtn" data-build-step="ORDER">+ ORDER BY</button>
+      <button type="button" class="stepbtn" data-build-step="LIMIT">+ LIMIT</button>
+      <button type="button" class="stepbtn" data-build-step="FULL">Complete Query</button>
+    </div>
+
+    <div class="builderrow">
+      <span class="builderlabel">Set operations:</span>
+      <button type="button" class="joinpick setop" data-build-join="UNION">UNION</button>
+      <button type="button" class="joinpick setop" data-build-join="UNION ALL">UNION ALL</button>
+    </div>
+
+    <div class="builderhint" id="builderHint">
+      Basic = JOIN only. Select another operation to see how it changes the query.
+    </div>
+  </div>
+
+  <div class="querygrid">
+    <div class="card flowbox">
+      <h3>Query building blocks</h3>
+      <div class="flow" id="flow"></div>
+      <div class="qnote" id="qnote"></div>
+    </div>
+    <div class="card flowbox">
+      <h3>SQL Query</h3>
+      <div class="code" id="qcode"></div>
+    </div>
+    <div class="card flowbox">
+      <h3>Live Result</h3>
+      <div class="qresult"><table id="qresult"></table></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="card" style="margin-top:14px;padding:14px 16px;border-left:5px solid #1769e0;background:#f8fbff">
+  <div style="font-weight:850;color:#1557aa">🔐 Authorized Educational Material</div>
+  <div style="font-size:12px;line-height:1.65;margin-top:5px;color:#44546a">
+    This interactive visualization is an original teaching resource prepared for DBMS laboratory instruction.
+    <b>Authorized use and attribution required.</b> Please do not copy, redistribute, publish, or claim this material
+    as your own work without permission from the creator/instructor.
+  </div>
+  <div style="margin-top:8px;font-size:12px;line-height:1.6;color:#334155">
+    <b>Instructor:</b> Surajit Sahoo &nbsp;|&nbsp;
+    <b>For suggestions or queries:</b>
+    <a href="mailto:surajitacademic123@gmail.com" style="color:#155eb4;font-weight:750">
+      surajitacademic123@gmail.com
+    </a>
+  </div>
+</section>
+
+</div>
+
+<script>
+const STUDENTS=[
+ {USN:"S001",Name:"Rahul",Dept:"CSE",Gender:"M"},
+ {USN:"S002",Name:"Priya",Dept:"ECE",Gender:"F"},
+ {USN:"S003",Name:"Arjun",Dept:"CSE",Gender:"M"},
+ {USN:"S004",Name:"Sneha",Dept:"ME",Gender:"F"},
+ {USN:"S006",Name:"Karan",Dept:"EEE",Gender:"M"}
+];
+
+const IAMARKS=[
+ {USN:"S001",Subcode:"DBMS",Test1:18},
+ {USN:"S002",Subcode:"OS",Test1:16},
+ {USN:"S005",Subcode:"CN",Test1:19},
+ {USN:"S003",Subcode:"DS",Test1:14},
+ {USN:"S007",Subcode:"ML",Test1:17}
+];
+
+let currentOp="INNER JOIN";
+let selectedUSN=null;
+
+const descriptions={
+ "INNER JOIN":"Only rows having a matching USN in both tables are returned.",
+ "LEFT JOIN":"Every STUDENT row is returned. If IAMARKS has no match, IAMARKS columns are NULL.",
+ "RIGHT JOIN":"Every IAMARKS row is returned. If STUDENT has no match, STUDENT columns are NULL.",
+ "FULL OUTER JOIN":"Every row from both tables is returned. Missing values on either side are NULL.",
+ "CROSS JOIN":"Every STUDENT row is paired with every IAMARKS row. No matching condition is required.",
+ "SELF JOIN":"The same table is used twice with different aliases and joined to itself.",
+ "UNION":"SELECT results are stacked vertically and duplicate rows are removed.",
+ "UNION ALL":"SELECT results are stacked vertically and duplicate rows are kept."
+};
+
+function renderSourceTables(){
+ const sCols=["USN","Name","Dept","Gender"];
+ const iCols=["USN","Subcode","Test1"];
+
+ document.getElementById("student").innerHTML=
+  "<thead><tr>"+sCols.map(c=>`<th>${c}</th>`).join("")+"</tr></thead><tbody>"+
+  STUDENTS.map(r=>`<tr class="src" data-usn="${r.USN}">${sCols.map(c=>`<td>${r[c]}</td>`).join("")}</tr>`).join("")+
+  "</tbody>";
+
+ document.getElementById("marks").innerHTML=
+  "<thead><tr>"+iCols.map(c=>`<th>${c}</th>`).join("")+"</tr></thead><tbody>"+
+  IAMARKS.map(r=>`<tr class="src" data-usn="${r.USN}">${iCols.map(c=>`<td>${r[c]}</td>`).join("")}</tr>`).join("")+
+  "</tbody>";
+
+ document.querySelectorAll(".src").forEach(row=>{
+   row.addEventListener("click",()=>{
+     selectedUSN=row.dataset.usn;
+     paintSourceRows();
+     render();
+   });
+ });
+}
+
+function paintSourceRows(){
+ document.querySelectorAll(".src").forEach(row=>{
+   const key=row.dataset.usn;
+   const inS=STUDENTS.some(x=>x.USN===key);
+   const inI=IAMARKS.some(x=>x.USN===key);
+   row.className="src "+(inS&&inI?"match":inS?"leftonly":"rightonly")+
+     (key===selectedUSN?" selected":"");
+ });
+}
+
+function getJoinRows(){
+ const sMap=new Map(STUDENTS.map(x=>[x.USN,x]));
+ const iMap=new Map(IAMARKS.map(x=>[x.USN,x]));
+ const out=[];
+
+ if(currentOp==="INNER JOIN"){
+   STUDENTS.forEach(s=>{
+     if(iMap.has(s.USN)) out.push({...s,...iMap.get(s.USN),kind:"match"});
+   });
+ }
+
+ if(currentOp==="LEFT JOIN"){
+   STUDENTS.forEach(s=>{
+     out.push({...s,...(iMap.get(s.USN)||{Subcode:null,Test1:null}),
+       kind:iMap.has(s.USN)?"match":"left"});
+   });
+ }
+
+ if(currentOp==="RIGHT JOIN"){
+   IAMARKS.forEach(i=>{
+     out.push({...sMap.get(i.USN)||{Name:null,Dept:null,Gender:null},...i,
+       kind:sMap.has(i.USN)?"match":"right"});
+   });
+ }
+
+ if(currentOp==="FULL OUTER JOIN"){
+   STUDENTS.forEach(s=>{
+     out.push({...s,...(iMap.get(s.USN)||{Subcode:null,Test1:null}),
+       kind:iMap.has(s.USN)?"match":"left"});
+   });
+   IAMARKS.forEach(i=>{
+     if(!sMap.has(i.USN))
+       out.push({USN:i.USN,Name:null,Dept:null,Gender:null,...i,kind:"right"});
+   });
+ }
+
+ if(currentOp==="CROSS JOIN"){
+   STUDENTS.forEach(s=>{
+     IAMARKS.forEach(i=>out.push({...s,...i,kind:"cross"}));
+   });
+ }
+
+ return out;
+}
+
+function setVenn(mode){
+ const ids=["hlLeft","hlRight","hlFullLeft","hlFullRight","hlIntersection"];
+ ids.forEach(id=>document.getElementById(id).setAttribute("opacity","0"));
+
+ const left=document.getElementById("leftClick");
+ const right=document.getElementById("rightClick");
+ const inter=document.getElementById("intersectionClick");
+
+ [left,right,inter].forEach(x=>x.classList.remove("active"));
+
+ if(mode==="INNER"){
+   document.getElementById("hlIntersection").setAttribute("opacity",".9");
+   inter.classList.add("active");
+   document.getElementById("vennSvgNote").textContent="MATCH only";
+ }
+ if(mode==="LEFT"){
+   document.getElementById("hlLeft").setAttribute("opacity",".85");
+   left.classList.add("active");
+   document.getElementById("vennSvgNote").textContent="ENTIRE STUDENT circle";
+ }
+ if(mode==="RIGHT"){
+   document.getElementById("hlRight").setAttribute("opacity",".85");
+   right.classList.add("active");
+   document.getElementById("vennSvgNote").textContent="ENTIRE IAMARKS circle";
+ }
+ if(mode==="FULL"){
+   document.getElementById("hlFullLeft").setAttribute("opacity",".72");
+   document.getElementById("hlFullRight").setAttribute("opacity",".72");
+   left.classList.add("active");right.classList.add("active");
+   document.getElementById("vennSvgNote").textContent="BOTH complete circles";
+ }
+ if(mode==="NONE"){
+   document.getElementById("vennSvgNote").textContent="Venn diagram not applicable";
+ }
+}
+
+function renderResult(rows,headers){
+ let html="<thead><tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>";
+ rows.forEach(r=>{
+   html+=`<tr class="${r.USN===selectedUSN?"focus":""}">`;
+   headers.forEach(h=>{
+     const v=r[h];
+     html+=`<td class="${v===null?"null":""}">${v===null?"NULL":v??""}</td>`;
+   });
+   html+="</tr>";
+ });
+ html+="</tbody>";
+ document.getElementById("result").innerHTML=html;
+}
+
+function renderGenericResult(rows,headers){
+ let html="<thead><tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>";
+ rows.forEach(r=>{
+   html+="<tr>";
+   headers.forEach(h=>{
+     const v=r[h];
+     html+=`<td class="${v===null?"null":""}">${v===null?"NULL":v??""}</td>`;
+   });
+   html+="</tr>";
+ });
+ html+="</tbody>";
+ document.getElementById("result").innerHTML=html;
+}
+
+function render(){
+ document.querySelectorAll(".op").forEach(b=>b.classList.toggle("active",b.dataset.op===currentOp));
+ document.querySelectorAll(".mini").forEach(b=>b.style.outline=b.dataset.op===currentOp?"3px solid #1769e0":"none");
+
+ document.getElementById("opTitle").textContent=currentOp;
+ document.getElementById("subtitle").textContent=descriptions[currentOp];
+
+ if(currentOp==="INNER JOIN"||currentOp==="LEFT JOIN"||currentOp==="RIGHT JOIN"||currentOp==="FULL OUTER JOIN"){
+   const rows=getJoinRows();
+   const headers=["USN","Name","Dept","Gender","Subcode","Test1"];
+   renderResult(rows,headers);
+
+   if(currentOp==="INNER JOIN"){
+     setVenn("INNER");
+     document.getElementById("vennNote").innerHTML="<b>INNER JOIN:</b> keep only the MATCH region.";
+     document.getElementById("resultTitle").textContent="Result Table — MATCH only";
+   }
+   if(currentOp==="LEFT JOIN"){
+     setVenn("LEFT");
+     document.getElementById("vennNote").innerHTML="<b>LEFT JOIN:</b> keep the entire STUDENT circle. IAMARKS values are NULL where no match exists.";
+     document.getElementById("resultTitle").textContent="Result Table — all STUDENT rows";
+   }
+   if(currentOp==="RIGHT JOIN"){
+     setVenn("RIGHT");
+     document.getElementById("vennNote").innerHTML="<b>RIGHT JOIN:</b> keep the entire IAMARKS circle. STUDENT values are NULL where no match exists.";
+     document.getElementById("resultTitle").textContent="Result Table — all IAMARKS rows";
+   }
+   if(currentOp==="FULL OUTER JOIN"){
+     setVenn("FULL");
+     document.getElementById("vennNote").innerHTML="<b>FULL OUTER JOIN:</b> keep both complete circles. Missing values become NULL.";
+     document.getElementById("resultTitle").textContent="Result Table — all rows from both tables";
+   }
+
+   document.getElementById("count").textContent=rows.length+" result rows";
+
+   const m=STUDENTS.filter(s=>IAMARKS.some(i=>i.USN===s.USN)).length;
+   const l=STUDENTS.filter(s=>!IAMARKS.some(i=>i.USN===s.USN)).length;
+   const r=IAMARKS.filter(i=>!STUDENTS.some(s=>s.USN===i.USN)).length;
+   document.getElementById("status").innerHTML=
+     `<span class="pill pblue">${m} matching key(s)</span>`+
+     `<span class="pill pyellow">${l} STUDENT-only</span>`+
+     `<span class="pill pred">${r} IAMARKS-only</span>`;
+ }else{
+   document.getElementById("status").innerHTML="";
+   setVenn("NONE");
+
+   if(currentOp==="CROSS JOIN"){
+     const rows=[];
+     STUDENTS.forEach(s=>IAMARKS.forEach(i=>rows.push({
+       "S.USN":s.USN,"S.Name":s.Name,
+       "IA.USN":i.USN,"IA.Subcode":i.Subcode,"IA.Test1":i.Test1
+     })));
+     renderGenericResult(rows,["S.USN","S.Name","IA.USN","IA.Subcode","IA.Test1"]);
+     document.getElementById("count").textContent=rows.length+" result rows";
+     document.getElementById("resultTitle").textContent="Result Table — CROSS JOIN";
+     document.getElementById("vennNote").innerHTML="<b>CROSS JOIN:</b> every STUDENT row is paired with every IAMARKS row. Here 5 × 5 = <b>25 combinations</b>.";
+     document.getElementById("status").innerHTML='<span class="pill pblue">5 STUDENT rows</span><span class="pill pred">5 IAMARKS rows</span><span class="pill pblue">25 combinations</span>';
+   }
+
+   else if(currentOp==="SELF JOIN"){
+     const rows=[];
+     for(let i=0;i<STUDENTS.length;i++){
+       for(let j=i+1;j<STUDENTS.length;j++){
+         if(STUDENTS[i].Dept===STUDENTS[j].Dept){
+           rows.push({
+             Student1:STUDENTS[i].USN,Name1:STUDENTS[i].Name,
+             Dept:STUDENTS[i].Dept,Student2:STUDENTS[j].USN,Name2:STUDENTS[j].Name
+           });
+         }
+       }
+     }
+     renderGenericResult(rows,["Student1","Name1","Dept","Student2","Name2"]);
+     document.getElementById("count").textContent=rows.length+" result rows";
+     document.getElementById("resultTitle").textContent="Result Table — SELF JOIN";
+     document.getElementById("vennNote").innerHTML="<b>SELF JOIN:</b> STUDENT is used twice as S1 and S2. Students from the same department are paired.";
+     document.getElementById("status").innerHTML='<span class="pill pblue">STUDENT → S1 + S2</span><span class="pill pblue">same Dept</span>';
+   }
+
+   else if(currentOp==="UNION" || currentOp==="UNION ALL"){
+     const rows=[];
+     STUDENTS.forEach(s=>rows.push({USN:s.USN,Source:"STUDENT"}));
+     IAMARKS.forEach(i=>rows.push({USN:i.USN,Source:"IAMARKS"}));
+
+     let finalRows=rows;
+     if(currentOp==="UNION"){
+       const seen=new Set();
+       finalRows=rows.filter(r=>!seen.has(r.USN) && seen.add(r.USN));
+     }
+
+     renderGenericResult(finalRows,["USN","Source"]);
+     document.getElementById("count").textContent=finalRows.length+" result rows";
+     document.getElementById("resultTitle").textContent="Result Table — "+currentOp;
+     document.getElementById("vennNote").innerHTML="<b>"+currentOp+":</b> SELECT results are stacked vertically. "+(currentOp==="UNION"?"Duplicate USNs are removed.":"Duplicate USNs are retained.");
+     document.getElementById("status").innerHTML=currentOp==="UNION"
+       ?'<span class="pill pblue">'+finalRows.length+' rows</span><span class="pill pblue">duplicates removed</span>'
+       :'<span class="pill pblue">'+finalRows.length+' rows</span><span class="pill pred">duplicates kept</span>';
+   }
+ }
+
+ document.getElementById("sql").textContent=getSQL(currentOp);
+ document.getElementById("explain").textContent=descriptions[currentOp];
+}
+
+function getSQL(x){
+ if(x==="INNER JOIN")return`SELECT S.USN, S.Name, S.Dept, S.Gender,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+INNER JOIN IAMARKS IA
+    ON S.USN = IA.USN;`;
+
+ if(x==="LEFT JOIN")return`SELECT S.USN, S.Name, S.Dept,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+LEFT JOIN IAMARKS IA
+    ON S.USN = IA.USN;`;
+
+ if(x==="RIGHT JOIN")return`SELECT S.USN, S.Name, S.Dept,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+RIGHT JOIN IAMARKS IA
+    ON S.USN = IA.USN;`;
+
+ if(x==="FULL OUTER JOIN")return`-- MySQL alternative
+SELECT S.USN, S.Name, S.Dept,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+LEFT JOIN IAMARKS IA
+    ON S.USN = IA.USN
+UNION
+SELECT S.USN, S.Name, S.Dept,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+RIGHT JOIN IAMARKS IA
+    ON S.USN = IA.USN;`;
+
+ if(x==="CROSS JOIN")return`SELECT S.USN, S.Name,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+CROSS JOIN IAMARKS IA;`;
+
+ if(x==="SELF JOIN")return`SELECT S1.USN AS Student1,
+       S2.USN AS Student2,
+       S1.Dept
+FROM STUDENT S1
+INNER JOIN STUDENT S2
+    ON S1.Dept = S2.Dept
+   AND S1.USN < S2.USN;`;
+
+ if(x==="UNION")return`SELECT USN
+FROM STUDENT
+UNION
+SELECT USN
+FROM IAMARKS;`;
+
+ return`SELECT USN
+FROM STUDENT
+UNION ALL
+SELECT USN
+FROM IAMARKS;`;
+}
+
+/* -------- Larger query examples -------- */
+let buildJoin="INNER JOIN";
+let buildStep="BASIC";
+
+function sourceJoinRows(joinType){
+  const smap=new Map(STUDENTS.map(s=>[s.USN,s]));
+  const imap=new Map(IAMARKS.map(i=>[i.USN,i]));
+  const rows=[];
+
+  if(joinType==="INNER JOIN"){
+    STUDENTS.forEach(s=>{
+      if(imap.has(s.USN)) rows.push({
+        USN:s.USN,Name:s.Name,Dept:s.Dept,Gender:s.Gender,
+        Subcode:imap.get(s.USN).Subcode,Test1:imap.get(s.USN).Test1
+      });
+    });
+  }
+
+  if(joinType==="LEFT JOIN"){
+    STUDENTS.forEach(s=>{
+      const i=imap.get(s.USN);
+      rows.push({
+        USN:s.USN,Name:s.Name,Dept:s.Dept,Gender:s.Gender,
+        Subcode:i?i.Subcode:null,Test1:i?i.Test1:null
+      });
+    });
+  }
+
+  if(joinType==="RIGHT JOIN"){
+    IAMARKS.forEach(i=>{
+      const s=smap.get(i.USN);
+      rows.push({
+        USN:i.USN,Name:s?s.Name:null,Dept:s?s.Dept:null,Gender:s?s.Gender:null,
+        Subcode:i.Subcode,Test1:i.Test1
+      });
+    });
+  }
+
+  if(joinType==="FULL OUTER JOIN"){
+    STUDENTS.forEach(s=>{
+      const i=imap.get(s.USN);
+      rows.push({
+        USN:s.USN,Name:s.Name,Dept:s.Dept,Gender:s.Gender,
+        Subcode:i?i.Subcode:null,Test1:i?i.Test1:null
+      });
+    });
+    IAMARKS.forEach(i=>{
+      if(!smap.has(i.USN)) rows.push({
+        USN:i.USN,Name:null,Dept:null,Gender:null,
+        Subcode:i.Subcode,Test1:i.Test1
+      });
+    });
+  }
+
+  if(joinType==="CROSS JOIN"){
+    STUDENTS.forEach(s=>IAMARKS.forEach(i=>{
+      rows.push({
+        USN:s.USN,Name:s.Name,Dept:s.Dept,Gender:s.Gender,
+        Subcode:i.Subcode,Test1:i.Test1,IAUSN:i.USN
+      });
+    }));
+  }
+
+  if(joinType==="SELF JOIN"){
+    for(let i=0;i<STUDENTS.length;i++){
+      for(let j=i+1;j<STUDENTS.length;j++){
+        if(STUDENTS[i].Dept===STUDENTS[j].Dept){
+          rows.push({
+            Student1:STUDENTS[i].USN,
+            Name1:STUDENTS[i].Name,
+            Dept:STUDENTS[i].Dept,
+            Student2:STUDENTS[j].USN,
+            Name2:STUDENTS[j].Name
+          });
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+function unionSourceRows(all){
+  const rows=[
+    ...STUDENTS.map(s=>({USN:s.USN,Source:"STUDENT"})),
+    ...IAMARKS.map(i=>({USN:i.USN,Source:"IAMARKS"}))
+  ];
+  if(all)return rows;
+  const seen=new Set();
+  return rows.filter(r=>{
+    if(seen.has(r.USN))return false;
+    seen.add(r.USN);
+    return true;
+  });
+}
+
+function avg(list){
+  const nums=list.filter(v=>typeof v==="number");
+  return nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:null;
+}
+
+function buildQueryData(){
+  const join=buildJoin;
+  const step=buildStep;
+
+  /* SET OPERATIONS */
+  if(join==="UNION"||join==="UNION ALL"){
+    let rows=unionSourceRows(join==="UNION ALL");
+    let code=`SELECT USN
+FROM STUDENT
+${join}
+SELECT USN
+FROM IAMARKS;`;
+    let flow=["SELECT","FROM",join];
+    let note=join==="UNION"
+      ?"Rows are stacked vertically and duplicate USNs are removed."
+      :"Rows are stacked vertically and duplicate USNs are retained.";
+
+    if(step==="ORDER"){
+      rows=[...rows].sort((a,b)=>a.USN.localeCompare(b.USN));
+      code=`SELECT USN
+FROM STUDENT
+${join}
+SELECT USN
+FROM IAMARKS
+ORDER BY USN;`;
+      flow=["SELECT","FROM",join,"ORDER BY"];
+      note+=" ORDER BY then sorts the combined result.";
+    }
+    if(step==="LIMIT"){
+      rows=rows.slice(0,3);
+      code=`SELECT USN
+FROM STUDENT
+${join}
+SELECT USN
+FROM IAMARKS
+LIMIT 3;`;
+      flow=["SELECT","FROM",join,"LIMIT"];
+      note+=" LIMIT keeps only the first 3 rows.";
+    }
+    if(step==="FULL"){
+      rows=join==="UNION"?rows.slice().sort((a,b)=>a.USN.localeCompare(b.USN)):rows;
+      rows=rows.slice(0,5);
+      code=`SELECT USN
+FROM STUDENT
+${join}
+SELECT USN
+FROM IAMARKS
+ORDER BY USN
+LIMIT 5;`;
+      flow=["SELECT","FROM",join,"ORDER BY","LIMIT"];
+      note+=" This demonstrates a combined set-operation query.";
+    }
+
+    return {rows,headers:["USN","Source"],code,flow,note};
+  }
+
+  /* SELF JOIN */
+  if(join==="SELF JOIN"){
+    let rows=sourceJoinRows(join), code, flow, note;
+    if(step==="BASIC"){
+      code=`SELECT S1.USN AS Student1,
+       S1.Name AS Name1,
+       S1.Dept,
+       S2.USN AS Student2,
+       S2.Name AS Name2
+FROM STUDENT S1
+INNER JOIN STUDENT S2
+    ON S1.Dept = S2.Dept
+   AND S1.USN < S2.USN;`;
+      flow=["STUDENT S1","JOIN","STUDENT S2","ON"];
+      note="SELF JOIN uses the same table twice. Here students are paired when they belong to the same department.";
+    }else if(step==="WHERE"){
+      rows=rows.filter(r=>r.Dept==="CSE");
+      code=`SELECT S1.USN AS Student1,
+       S2.USN AS Student2,
+       S1.Dept
+FROM STUDENT S1
+INNER JOIN STUDENT S2
+    ON S1.Dept = S2.Dept
+   AND S1.USN < S2.USN
+WHERE S1.Dept = 'CSE';`;
+      flow=["JOIN","ON","WHERE"];
+      note="WHERE filters the SELF JOIN result. Only CSE pairs remain.";
+    }else if(step==="COUNT"||step==="AVG"||step==="HAVING"){
+      const groups={};
+      rows.forEach(r=>groups[r.Dept]=(groups[r.Dept]||0)+1);
+      rows=Object.entries(groups).map(([Dept,Count])=>({Dept,Count}));
+      code=`SELECT S1.Dept,
+       COUNT(*) AS Pair_Count
+FROM STUDENT S1
+INNER JOIN STUDENT S2
+    ON S1.Dept = S2.Dept
+   AND S1.USN < S2.USN
+GROUP BY S1.Dept
+${step==="HAVING"?"HAVING COUNT(*) >= 1\n":""};`;
+      flow=["SELF JOIN","GROUP BY","COUNT()",...(step==="HAVING"?["HAVING"]:[])];
+      note=step==="HAVING"?"HAVING filters the grouped SELF JOIN result.":"COUNT(*) counts student pairs in each department.";
+      rows=rows.map(r=>({Dept:r.Dept,Pair_Count:r.Count}));
+    }else if(step==="ORDER"){
+      rows=[...rows].sort((a,b)=>a.Dept.localeCompare(b.Dept));
+      code=`SELECT S1.USN AS Student1,
+       S2.USN AS Student2,
+       S1.Dept
+FROM STUDENT S1
+INNER JOIN STUDENT S2
+    ON S1.Dept = S2.Dept
+   AND S1.USN < S2.USN
+ORDER BY S1.Dept;`;
+      flow=["SELF JOIN","ON","ORDER BY"];
+      note="ORDER BY sorts the SELF JOIN pairs.";
+    }else if(step==="LIMIT"){
+      rows=rows.slice(0,1);
+      code=`SELECT S1.USN AS Student1,
+       S2.USN AS Student2,
+       S1.Dept
+FROM STUDENT S1
+INNER JOIN STUDENT S2
+    ON S1.Dept = S2.Dept
+   AND S1.USN < S2.USN
+LIMIT 1;`;
+      flow=["SELF JOIN","ON","LIMIT"];
+      note="LIMIT keeps only the first student pair.";
+    }else{
+      rows=rows.slice(0,1);
+      code=`SELECT S1.Dept,
+       COUNT(*) AS Pair_Count
+FROM STUDENT S1
+INNER JOIN STUDENT S2
+    ON S1.Dept = S2.Dept
+   AND S1.USN < S2.USN
+GROUP BY S1.Dept
+HAVING COUNT(*) >= 1
+ORDER BY Pair_Count DESC
+LIMIT 1;`;
+      const groups={};
+      sourceJoinRows(join).forEach(r=>groups[r.Dept]=(groups[r.Dept]||0)+1);
+      rows=Object.entries(groups).map(([Dept,Pair_Count])=>({Dept,Pair_Count}))
+             .sort((a,b)=>b.Pair_Count-a.Pair_Count).slice(0,1);
+      flow=["SELF JOIN","GROUP BY","COUNT()","HAVING","ORDER BY","LIMIT"];
+      note="Complete example: SELF JOIN → GROUP BY → COUNT → HAVING → ORDER BY → LIMIT.";
+    }
+    return {rows,headers:Object.keys(rows[0]||{Student1:"",Name1:"",Dept:"",Student2:"",Name2:""}),code,flow,note};
+  }
+
+  /* NORMAL JOINS */
+  let rows=sourceJoinRows(join);
+  let code,flow,note,headers=["USN","Name","Dept","Gender","Subcode","Test1"];
+
+  if(step==="BASIC"){
+    code=join==="CROSS JOIN"
+      ?`SELECT S.USN, S.Name,
+       IA.USN AS IA_USN,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+CROSS JOIN IAMARKS IA;`
+      :`SELECT S.USN, S.Name, S.Dept,
+       IA.Subcode, IA.Test1
+FROM STUDENT S
+${join}
+IAMARKS IA
+    ON S.USN = IA.USN;`;
+    flow=join==="CROSS JOIN"?["FROM","CROSS JOIN"]:["FROM","JOIN","ON"];
+    note=descriptions[join];
+  }
+
+  if(step==="WHERE"){
+    rows=rows.filter(r=>r.Test1!==null && r.Test1>=15);
+    code=join==="CROSS JOIN"
+      ?`SELECT S.USN, S.Name, IA.Test1
+FROM STUDENT S
+CROSS JOIN IAMARKS IA
+WHERE IA.Test1 >= 15;`
+      :`SELECT S.USN, S.Name, IA.Test1
+FROM STUDENT S
+${join}
+IAMARKS IA
+    ON S.USN = IA.USN
+WHERE IA.Test1 >= 15;`;
+    flow=join==="CROSS JOIN"?["CROSS JOIN","WHERE"]:["JOIN","ON","WHERE"];
+    note="WHERE filters individual result rows. Here only Test1 >= 15 is kept.";
+  }
+
+  if(step==="AVG"||step==="COUNT"||step==="HAVING"){
+    const groups={};
+    rows.forEach(r=>{
+      const key=r.Dept===null?"NULL":r.Dept;
+      if(!groups[key])groups[key]=[];
+      groups[key].push(r);
+    });
+    let grouped=Object.entries(groups).map(([Dept,rs])=>({
+      Dept:Dept==="NULL"?null:Dept,
+      Avg_Test1:avg(rs.map(r=>r.Test1)),
+      Student_Count:rs.length
+    }));
+    if(step==="HAVING") grouped=grouped.filter(r=>r.Avg_Test1!==null && r.Avg_Test1>=15);
+
+    if(step==="COUNT"){
+      rows=grouped.map(r=>({Dept:r.Dept,Student_Count:r.Student_Count}));
+      code=join==="CROSS JOIN"
+        ?`SELECT S.Dept,
+       COUNT(*) AS Student_Count
+FROM STUDENT S
+CROSS JOIN IAMARKS IA
+GROUP BY S.Dept;`
+        :`SELECT S.Dept,
+       COUNT(*) AS Student_Count
+FROM STUDENT S
+${join}
+IAMARKS IA
+    ON S.USN = IA.USN
+GROUP BY S.Dept;`;
+      flow=["JOIN","GROUP BY","COUNT()"];
+      note="GROUP BY creates one group per department. COUNT(*) counts rows inside each group.";
+    }else{
+      rows=grouped.map(r=>({Dept:r.Dept,Avg_Test1:r.Avg_Test1===null?null:r.Avg_Test1.toFixed(2)}));
+      code=join==="CROSS JOIN"
+        ?`SELECT S.Dept,
+       AVG(IA.Test1) AS Avg_Test1
+FROM STUDENT S
+CROSS JOIN IAMARKS IA
+GROUP BY S.Dept${step==="HAVING"?`\nHAVING AVG(IA.Test1) >= 15`:""};`
+        :`SELECT S.Dept,
+       AVG(IA.Test1) AS Avg_Test1
+FROM STUDENT S
+${join}
+IAMARKS IA
+    ON S.USN = IA.USN
+GROUP BY S.Dept${step==="HAVING"?`\nHAVING AVG(IA.Test1) >= 15`:""};`;
+      flow=["JOIN","GROUP BY","AVG()"].concat(step==="HAVING"?["HAVING"]:[]);
+      note=step==="HAVING"
+        ?"HAVING filters groups after AVG() is calculated. WHERE filters rows; HAVING filters groups."
+        :"AVG(Test1) is calculated separately for every department.";
+    }
+    headers=Object.keys(rows[0]||{Dept:"",Avg_Test1:""});
+  }
+
+  if(step==="ORDER"){
+    rows=[...rows].sort((a,b)=>(b.Test1??-Infinity)-(a.Test1??-Infinity));
+    code=join==="CROSS JOIN"
+      ?`SELECT S.USN, S.Name, IA.Test1
+FROM STUDENT S
+CROSS JOIN IAMARKS IA
+ORDER BY IA.Test1 DESC;`
+      :`SELECT S.USN, S.Name, IA.Test1
+FROM STUDENT S
+${join}
+IAMARKS IA
+    ON S.USN = IA.USN
+ORDER BY IA.Test1 DESC;`;
+    headers=["USN","Name","Test1"];
+    flow=["JOIN","ORDER BY"];
+    note="ORDER BY sorts the JOIN result. DESC means highest Test1 first.";
+  }
+
+  if(step==="LIMIT"){
+    rows=[...rows].sort((a,b)=>(b.Test1??-Infinity)-(a.Test1??-Infinity)).slice(0,3);
+    code=join==="CROSS JOIN"
+      ?`SELECT S.USN, S.Name, IA.Test1
+FROM STUDENT S
+CROSS JOIN IAMARKS IA
+ORDER BY IA.Test1 DESC
+LIMIT 3;`
+      :`SELECT S.USN, S.Name, IA.Test1
+FROM STUDENT S
+${join}
+IAMARKS IA
+    ON S.USN = IA.USN
+ORDER BY IA.Test1 DESC
+LIMIT 3;`;
+    headers=["USN","Name","Test1"];
+    flow=["JOIN","ORDER BY","LIMIT"];
+    note="LIMIT keeps only the top 3 rows after ORDER BY.";
+  }
+
+  if(step==="FULL"){
+    rows=rows.filter(r=>r.Test1!==null && r.Test1>=15);
+    const groups={};
+    rows.forEach(r=>{
+      if(!groups[r.Dept])groups[r.Dept]=[];
+      groups[r.Dept].push(r.Test1);
+    });
+    rows=Object.entries(groups)
+      .map(([Dept,vals])=>({Dept,Avg_Test1:avg(vals)}))
+      .filter(r=>r.Avg_Test1>=15)
+      .sort((a,b)=>b.Avg_Test1-a.Avg_Test1)
+      .slice(0,3)
+      .map(r=>({Dept:r.Dept,Avg_Test1:r.Avg_Test1.toFixed(2)}));
+
+    code=join==="CROSS JOIN"
+      ?`SELECT S.Dept,
+       AVG(IA.Test1) AS Avg_Test1
+FROM STUDENT S
+CROSS JOIN IAMARKS IA
+WHERE IA.Test1 >= 15
+GROUP BY S.Dept
+HAVING AVG(IA.Test1) >= 15
+ORDER BY Avg_Test1 DESC
+LIMIT 3;`
+      :`SELECT S.Dept,
+       AVG(IA.Test1) AS Avg_Test1
+FROM STUDENT S
+${join}
+IAMARKS IA
+    ON S.USN = IA.USN
+WHERE IA.Test1 >= 15
+GROUP BY S.Dept
+HAVING AVG(IA.Test1) >= 15
+ORDER BY Avg_Test1 DESC
+LIMIT 3;`;
+    headers=["Dept","Avg_Test1"];
+    flow=["JOIN","WHERE","GROUP BY","AVG()","HAVING","ORDER BY","LIMIT"];
+    note="Complete query: JOIN → WHERE → GROUP BY → AVG → HAVING → ORDER BY → LIMIT.";
+  }
+
+  return {rows,headers,code,flow,note};
+}
+
+function renderBuilder(){
+  document.querySelectorAll("[data-build-join]").forEach(b=>
+    b.classList.toggle("active",b.dataset.buildJoin===buildJoin));
+  document.querySelectorAll("[data-build-step]").forEach(b=>
+    b.classList.toggle("active",b.dataset.buildStep===buildStep));
+
+  const data=buildQueryData();
+  document.getElementById("flow").innerHTML=data.flow.map((x,i)=>
+    (i?'<span class="arrow">→</span>':'')+`<span>${x}</span>`).join("");
+  document.getElementById("qnote").textContent=data.note;
+  document.getElementById("qcode").textContent=data.code;
+
+  let h="<thead><tr>"+data.headers.map(x=>`<th>${x}</th>`).join("")+"</tr></thead><tbody>";
+  data.rows.forEach(r=>{
+    h+="<tr>"+data.headers.map(k=>{
+      const v=r[k];
+      return `<td class="${v===null?"null":""}">${v===null?"NULL":v??""}</td>`;
+    }).join("")+"</tr>";
+  });
+  h+="</tbody>";
+  document.getElementById("qresult").innerHTML=h;
+
+  document.getElementById("builderHint").textContent=
+    (buildJoin==="UNION"||buildJoin==="UNION ALL")
+      ? "Set operation selected. ORDER BY and LIMIT are available as direct next-step examples."
+      : `${buildJoin} selected. Now choose any query operation above and watch the result change.`;
+}
+
+document.querySelectorAll("[data-build-join]").forEach(b=>{
+  b.addEventListener("click",()=>{
+    buildJoin=b.dataset.buildJoin;
+    buildStep="BASIC";
+    renderBuilder();
+  });
+});
+document.querySelectorAll("[data-build-step]").forEach(b=>{
+  b.addEventListener("click",()=>{
+    buildStep=b.dataset.buildStep;
+    renderBuilder();
+  });
+});
+
+/* Initial page rendering — required for the source tables, JOIN result,
+   SQL panel, and bigger-query builder to appear immediately. */
+renderSourceTables();
+paintSourceRows();
+render();
+renderBuilder();
+</script>
+
+<script>
+/* ===== Robust initialization layer =====
+   This layer intentionally uses direct event handlers so the visualizer
+   remains interactive even if a browser restores the file from cache. */
+(function(){
+  function safe(fn){try{fn()}catch(e){console.error("Visualizer:",e)}}
+
+  function initTables(){
+    var s=document.getElementById("student");
+    var m=document.getElementById("marks");
+    if(!s||!m)return;
+
+    var sh="<thead><tr><th>USN 🔑PK</th><th>Name</th><th>Dept</th><th>Gender</th></tr></thead><tbody>";
+    for(var i=0;i<STUDENTS.length;i++){
+      var r=STUDENTS[i];
+      sh+="<tr class='src' data-usn='"+r.USN+"'>"+
+        "<td>"+r.USN+"</td><td>"+r.Name+"</td><td>"+r.Dept+"</td><td>"+r.Gender+"</td></tr>";
+    }
+    s.innerHTML=sh+"</tbody>";
+
+    var ih="<thead><tr><th>USN 🔗FK</th><th>Subcode 🔑</th><th>Test1</th></tr></thead><tbody>";
+    for(var j=0;j<IAMARKS.length;j++){
+      var x=IAMARKS[j];
+      ih+="<tr class='src' data-usn='"+x.USN+"'>"+
+        "<td>"+x.USN+"</td><td>"+x.Subcode+"</td><td>"+x.Test1+"</td></tr>";
+    }
+    m.innerHTML=ih+"</tbody>";
+
+    document.querySelectorAll(".src").forEach(function(row){
+      row.onclick=function(){
+        selectedUSN=row.getAttribute("data-usn");
+        safe(paintSourceRows);
+        safe(render);
+      };
+    });
+    safe(paintSourceRows);
+  }
+
+  function bindMainButtons(){
+    document.querySelectorAll(".op").forEach(function(btn){
+      btn.onclick=function(){
+        currentOp=btn.getAttribute("data-op");
+        safe(render);
+      };
+    });
+
+    document.querySelectorAll(".mini").forEach(function(btn){
+      btn.onclick=function(){
+        currentOp=btn.getAttribute("data-op");
+        safe(render);
+      };
+    });
+
+    var l=document.getElementById("leftClick");
+    var r=document.getElementById("rightClick");
+    var x=document.getElementById("intersectionClick");
+    if(l)l.onclick=function(){currentOp="LEFT JOIN";safe(render)};
+    if(r)r.onclick=function(){currentOp="RIGHT JOIN";safe(render)};
+    if(x)x.onclick=function(){currentOp="INNER JOIN";safe(render)};
+  }
+
+  function bindBuilderButtons(){
+    document.querySelectorAll("[data-build-join]").forEach(function(btn){
+      btn.onclick=function(){
+        buildJoin=btn.getAttribute("data-build-join");
+        buildStep="BASIC";
+        safe(renderBuilder);
+      };
+    });
+    document.querySelectorAll("[data-build-step]").forEach(function(btn){
+      btn.onclick=function(){
+        buildStep=btn.getAttribute("data-build-step");
+        safe(renderBuilder);
+      };
+    });
+  }
+
+  function init(){
+    safe(initTables);
+    safe(bindMainButtons);
+    safe(bindBuilderButtons);
+    safe(render);
+    safe(renderBuilder);
+  }
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",init);
+  }else{
+    init();
+  }
+})();
+</script>
+
+</body>
+</html>
