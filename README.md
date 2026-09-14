@@ -1,7 +1,7 @@
 # SQL JOIN & UNION Interactive Visualizer
 
 Interactive HTML visualization for learning SQL JOIN, UNION, and related query operations.
-
+For Visualization (https://surajit-sahoo-iitian.github.io/sql-join-union-interactive-visualizer/)
 ## Topics
 
 - INNER JOIN
